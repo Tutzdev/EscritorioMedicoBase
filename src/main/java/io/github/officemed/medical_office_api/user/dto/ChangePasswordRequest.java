@@ -1,0 +1,17 @@
+package io.github.officemed.medical_office_api.user.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+public record ChangePasswordRequest(
+
+        @NotBlank(message = "New password is required")
+        @Size(
+                min = 8,
+                max = 72,
+                message = "New password must contain between 8 and 72 characters"
+        )
+        String newPassword
+
+) {
+}
