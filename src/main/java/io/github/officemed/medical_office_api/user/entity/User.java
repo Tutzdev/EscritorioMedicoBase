@@ -57,7 +57,10 @@ public class User {
     ) {
         this.name = normalizeName(name);
         this.email = normalizeEmail(email);
-        this.passwordHash = requireText(passwordHash, "Password hash is required");
+        this.passwordHash = requireNonBlank(
+                passwordHash,
+                "Password hash is required"
+        );
         this.role = Objects.requireNonNull(role, "Role is required");
         this.active = true;
     }
@@ -68,61 +71,56 @@ public class User {
             String passwordHash,
             Role role
     ) {
-        return new User(
-                name,
-                email,
-                passwordHash,
-                role
-        );
+        return new User(name, email, passwordHash, role);
     }
 
-    public void updateProfile(
-            String name,
-            Role role
-    ) {
+    public void rename(String name) {
         this.name = normalizeName(name);
+    }
+
+    public void changeRole(Role role) {
         this.role = Objects.requireNonNull(role, "Role is required");
     }
 
-    public void changePasswordHash(String passwordHash) {
-        this.passwordHash = requireText(
+    public void updatePasswordHash(String passwordHash) {
+        this.passwordHash = requireNonBlank(
                 passwordHash,
                 "Password hash is required"
         );
     }
 
     public void activate() {
-        this.active = true;
+        active = true;
     }
 
     public void deactivate() {
-        this.active = false;
+        active = false;
     }
 
     @PrePersist
-    private void prePersist() {
+    private void initializeTimestamps() {
         Instant now = Instant.now();
 
-        this.createdAt = now;
-        this.updatedAt = now;
+        createdAt = now;
+        updatedAt = now;
     }
 
     @PreUpdate
-    private void preUpdate() {
-        this.updatedAt = Instant.now();
+    private void refreshUpdatedAt() {
+        updatedAt = Instant.now();
     }
 
     private static String normalizeName(String name) {
-        return requireText(name, "Name is required").trim();
+        return requireNonBlank(name, "Name is required").trim();
     }
 
     private static String normalizeEmail(String email) {
-        return requireText(email, "Email is required")
+        return requireNonBlank(email, "Email is required")
                 .trim()
                 .toLowerCase(Locale.ROOT);
     }
 
-    private static String requireText(
+    private static String requireNonBlank(
             String value,
             String message
     ) {
@@ -133,17 +131,35 @@ public class User {
         return value;
     }
 
-    public String getName() {return name;}
+    public UUID getId() {
+        return id;
+    }
 
-    public String getEmail() {return email;}
+    public String getName() {
+        return name;
+    }
 
-    public String getPasswordHash() {return passwordHash;}
+    public String getEmail() {
+        return email;
+    }
 
-    public Role getRole() {return role;}
+    public String getPasswordHash() {
+        return passwordHash;
+    }
 
-    public boolean isActive() {return active;}
+    public Role getRole() {
+        return role;
+    }
 
-    public Instant getCreatedAt() {return createdAt;}
+    public boolean isActive() {
+        return active;
+    }
 
-    public Instant getUpdatedAt() {return updatedAt;}
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
 }

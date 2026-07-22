@@ -16,38 +16,41 @@ import java.util.Locale;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder
+    private final PasswordEncoder passwordEncoder;
 
     public UserService(
-        UserRepository userRepository,
-        PasswordEncoder passwordEncoder
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional
-    public UserResponse create(CreateRequest request) {
-        String normalizedEmail = request.email()
-            .trim()
-            .toLowerCase(Locale.ROOT);
+    public UserResponse create(CreateUserRequest request) {
+        String normalizedEmail = normalizeEmail(request.email());
 
-        if(userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
-            throw new EmailAlreadyInUseException(normalizedEmail);
-        }
+        validateEmailAvailability(normalizedEmail);
 
         String passwordHash = passwordEncoder.encode(request.password());
 
         User user = User.create(
-            request.name(),
-            normalizedEmail,
-            passwordHash,
-            request.role()
+                request.name(),
+                normalizedEmail,
+                passwordHash,
+                request.role()
         );
 
-        User savedUser = userRepository.save(user);
-
-        return UserMapper.toResponse(savedUser);
+        return UserMapper.toResponse(userRepository.save(user));
     }
 
+    private void validateEmailAvailability(String email) {
+        if (userRepository.existsByEmailIgnoreCase(email)) {
+            throw new EmailAlreadyInUseException(email);
+        }
+    }
+
+    private String normalizeEmail(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
+    }
 }
