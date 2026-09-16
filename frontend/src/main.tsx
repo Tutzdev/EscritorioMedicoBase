@@ -1,5 +1,5 @@
 import "@fontsource-variable/manrope";
-import "@fontsource-variable/newsreader";
+import "@fontsource-variable/nunito";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
