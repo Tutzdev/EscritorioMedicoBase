@@ -1,5 +1,9 @@
 package io.github.officemed.medical_office_api.shared.health;
 
-public class HealthResponse {
-    
+import java.time.Instant;
+
+public record HealthResponse(
+        String status,
+        Instant timestamp
+) {
 }

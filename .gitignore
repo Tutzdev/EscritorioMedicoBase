@@ -47,3 +47,10 @@ application-secrets.properties
 ### Logs ###
 logs/
 *.log
+
+### Frontend ###
+frontend/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
