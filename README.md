@@ -1,21 +1,28 @@
 # Escritório Médico Base
 
-**Sistema de gestão para clínicas e consultórios:** agenda com validação de disponibilidade e conflitos, pacientes, profissionais, serviços e atendimentos, com três perfis de acesso controlados no servidor.
+**API Spring Boot para gestão de clínicas e consultórios:** agenda com validação de disponibilidade e conflitos, pacientes, profissionais, serviços e atendimentos, com três perfis de acesso controlados no servidor.
 
 [![CI](https://github.com/Tutzdev/EscritorioMedicoBase/actions/workflows/ci.yml/badge.svg)](https://github.com/Tutzdev/EscritorioMedicoBase/actions/workflows/ci.yml)
 ![Java 21](https://img.shields.io/badge/Java-21-007396?logo=openjdk&logoColor=white)
 ![Spring Boot 4.1](https://img.shields.io/badge/Spring_Boot-4.1-6DB33F?logo=springboot&logoColor=white)
 ![PostgreSQL + Flyway](https://img.shields.io/badge/PostgreSQL-Flyway-4169E1?logo=postgresql&logoColor=white)
-![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
-![TanStack Query](https://img.shields.io/badge/TanStack_Query-5-FF4154?logo=reactquery&logoColor=white)
-
-![Visão do dia com os próximos atendimentos](docs/screenshots/painel.png)
+![Spring Security](https://img.shields.io/badge/Spring_Security-JWT_+_refresh-6DB33F?logo=springsecurity&logoColor=white)
+![JUnit 5](https://img.shields.io/badge/JUnit-5-25A162?logo=junit5&logoColor=white)
 
 ## Por que este projeto
 
 Clínicas de especialidades diferentes compartilham a mesma rotina: cadastrar paciente, montar a agenda dos profissionais, confirmar, atender e registrar. Este projeto é um **núcleo reutilizável** dessa rotina. Necessidades de uma especialidade (exames, laudos, imagens) entram como **módulos próprios**, sem encher as entidades compartilhadas de campos opcionais.
 
-![Agenda do dia com o fluxo de status de cada atendimento](docs/screenshots/agenda.png)
+## Destaques de backend
+
+- **Máquina de estados na entidade:** `Appointment` só aceita transições válidas. Uma transição inválida responde **422** em vez de corromper o estado.
+- **Concorrência tratada:** lock pessimista (`PESSIMISTIC_WRITE`) ao alterar um agendamento. Duas recepcionistas no mesmo horário não geram estado inconsistente.
+- **Regras de agenda no servidor:** duração calculada pelo serviço, conflito de horário e agendamento fora da disponibilidade do profissional são bloqueados na API.
+- **Autorização por perfil com `@PreAuthorize`:** 39 regras declaradas nos controllers e uma matriz de permissões testada de ponta a ponta.
+- **JWT implementado à mão com `javax.crypto`:** access e refresh token com `type` distintos, comparação de assinatura em tempo constante e algoritmo do header ignorado.
+- **Schema só por migração:** Flyway + `ddl-auto=validate`.
+- **Erros previsíveis:** um único `ApiErrorResponse` para 400 (com erros por campo), 401, 403, 404, 409 e 422, sem stack trace.
+- **Organização por domínio:** cada pacote tem os próprios controller, service, repository, entity, dto, mapper e exception.
 
 ## Funcionalidades
 
@@ -27,10 +34,6 @@ Clínicas de especialidades diferentes compartilham a mesma rotina: cadastrar pa
 - **Profissionais** com registro (CRM/UF), especialidade e disponibilidade semanal.
 - **Painel do dia** com métricas e próximos horários.
 - **Identidade da clínica** configurável: nome, dados institucionais, fuso horário, cor e logotipo.
-
-| Pacientes | Profissionais | Login |
-| --- | --- | --- |
-| ![Pacientes](docs/screenshots/pacientes.png) | ![Profissionais](docs/screenshots/profissionais.png) | ![Login](docs/screenshots/login.png) |
 
 ## Regras de negócio que valem destacar
 
@@ -63,7 +66,7 @@ stateDiagram-v2
 | Agenda | Gerencia | Gerencia | Consulta e atualiza o fluxo |
 | Atendimentos | Registra | Consulta | Registra |
 
-Ocultar um botão no frontend não substitui autorização: **toda regra acima é testada contra a API** (veja [Testes](#testes)).
+Esconder um botão na interface não é autorização: **toda regra acima é aplicada e testada na API** (veja [Testes](#testes)).
 
 ## Arquitetura
 
@@ -71,7 +74,7 @@ Organização **por domínio**. Cada pacote tem `controller`, `service`, `reposi
 
 ```mermaid
 flowchart LR
-    W[React SPA] -->|/api + Bearer| SEC[Spring Security<br/>JwtAuthenticationFilter]
+    W[Cliente HTTP] -->|/api + Bearer| SEC[Spring Security<br/>JwtAuthenticationFilter]
     SEC --> CT[Controllers<br/>@PreAuthorize]
     CT --> SV[Services<br/>regras e transações]
     SV --> EN[Entidades<br/>invariantes e transições]
@@ -90,11 +93,6 @@ src/main/java/.../
 ├── dashboard/       # visão operacional do dia
 ├── patient/  professional/  servicecatalog/  specialty/  user/
 └── shared/          # erros padronizados, paginação, validação de CPF, health
-
-frontend/src/
-├── api/  auth/  app/        # cliente HTTP com renovação de token, rotas protegidas
-├── components/  pages/      # telas e componentes (Radix Dialog, Lucide)
-└── hooks/  types/  utils/
 ```
 
 ## Decisões técnicas
@@ -107,7 +105,7 @@ frontend/src/
 | Specifications nas listagens | Filtros combináveis (busca, status, perfil) sem uma query por combinação. |
 | Erros no mesmo formato (`ApiErrorResponse`) | 400 com erros por campo, 401, 403, 404, 409 e 422 previsíveis para o frontend. Stack trace nunca vaza. |
 | Bootstrap de administrador opt-in | O primeiro admin só é criado com `BOOTSTRAP_ADMIN_ENABLED=true` e senha de 12+ caracteres. Nada de credencial padrão. |
-| TanStack Query no frontend | Cache, revalidação e estados de carregamento e erro consistentes em todas as telas. |
+| Validação de CPF como anotação (`@ValidCpf`) | A regra dos dígitos verificadores fica num `ConstraintValidator` reutilizável e testado isoladamente. |
 
 ## Como rodar
 
@@ -165,7 +163,10 @@ O **GitHub Actions** roda backend e frontend a cada push.
 - Nenhum segredo no repositório: banco, JWT e administrador vêm do ambiente.
 - Senhas com **BCrypt**, segredo JWT de no mínimo 32 bytes (a aplicação não sobe com menos).
 - CORS restrito a `CORS_ALLOWED_ORIGINS`.
-- Os dados das capturas de tela são **fictícios**.
+
+## Interface
+
+O repositório inclui um painel web em React (`frontend/`) que consome a API, com renovação automática de token e rotas protegidas por perfil.
 
 ## Próximos passos
 
