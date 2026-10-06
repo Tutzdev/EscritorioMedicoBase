@@ -1,10 +1,18 @@
-HELP.md
+### Java / Maven ###
 target/
+HELP.md
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+*.class
 
-### STS ###
+### IDEs ###
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+.vscode/
 .apt_generated
 .classpath
 .factorypath
@@ -12,14 +20,6 @@ target/
 .settings
 .springBeans
 .sts4-cache
-
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
 /nbproject/private/
 /nbbuild/
 /dist/
@@ -29,28 +29,65 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### VS Code ###
-.vscode/
+### Frontend ###
+node_modules/
+dist/
+*.tsbuildinfo
+*.local
+vite.config.js
+vite.config.d.ts
+npm-debug.log*
 
-### Environment and secrets ###
+### Ambiente e segredos ###
 .env
 .env.*
 !.env.example
 application-local.properties
+application-local.yml
 application-secrets.properties
 *.pem
 *.key
 *.p12
 *.pfx
 *.jks
+*.keystore
+id_rsa*
+id_ed25519*
+secrets/
 
-### Logs ###
+### Bancos locais, dumps e logs ###
+*.db
+*.sqlite
+*.sqlite3
+*.mv.db
+*.trace.db
+*.dump
+*.hprof
+hs_err_pid*
+replay_pid*
 logs/
 *.log
 
-### Frontend ###
-frontend/node_modules/
-frontend/dist/
-frontend/*.tsbuildinfo
-frontend/vite.config.js
-frontend/vite.config.d.ts
+### Sistema operacional e editores ###
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*~
+
+### Ferramentas de IA e automação (uso local) ###
+AGENTS*.md
+CLAUDE.md
+CLAUDE.local.md
+GEMINI.md
+.claude/
+.codex/
+.cursor/
+.cursorrules
+.windsurf/
+.windsurfrules
+.aider*
+.continue/
+.github/copilot-instructions.md
+.playwright-cli/
+.playwright-mcp/
